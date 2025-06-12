@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSINT Ninja</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Scan Modal -->
+    <div class="modal" id="scanModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>New Scan</h2>
+                <span class="material-icons close-modal">close</span>
+            </div>
+            <div class="modal-body">
+                <div class="tab-container">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" data-tab="subdomain">Subdomain</button>
+                        <button class="tab-btn" data-tab="directory">Directory</button>
+                        <button class="tab-btn" data-tab="js">JS Analysis</button>
+                    </div>
+
+                    <!-- Subdomain Scanner Form -->
+                    <div class="tab-content active" id="subdomain">
+                        <form id="subdomainForm" class="scan-form">
+                            <div class="form-group">
+                                <label>Target Domain</label>
+                                <input type="text" name="target_domain" placeholder="example: example.com" required>
+                            </div>
+                            <button type="submit" class="submit-btn">
+                                <span class="material-icons">search</span>
+                                Start Scan
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Directory Scanner Form -->
+                    <div class="tab-content" id="directory">
+                        <form id="directoryForm" class="scan-form">
+                            <div class="form-group">
+                                <label>Target URL</label>
+                                <input type="url" name="target_url" placeholder="example: https://example.com" required>
+                            </div>
+                            <button type="submit" class="submit-btn">
+                                <span class="material-icons">folder_open</span>
+                                Start Scan
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- JS Analyzer Form -->
+                    <div class="tab-content" id="js">
+                        <form id="jsForm" class="scan-form">
+                            <div class="form-group">
+                                <label>Target URL</label>
+                                <input type="url" name="target_url" placeholder="example: https://example.com" required>
+                            </div>
+                            <button type="submit" class="submit-btn">
+                                <span class="material-icons">code</span>
+                                Start Analysis
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay">
+        <div class="loading-content">
+            <div class="scanner-animation">
+                <div class="scan-bar"></div>
+                <div class="target-domain"></div>
+            </div>
+            <div class="loading-text">
+                <h3 id="loadingStatus">Starting scan...</h3>
+                <p id="loadingSubStatus">Preparing...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Main Content -->
+        <main class="main-content">
+            <header>
+                <div class="logo">
+                    <i class="fa-solid fa-user-ninja"></i>
+                    <h1>OSINT Ninja</h1>
+                </div>
+                <div class="header-right">
+                    <button class="new-scan-btn" id="openScanModal">
+                        <span class="material-icons">add</span>
+                        New Scan
+                    </button>
+                </div>
+            </header>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #4CAF50;">
+                        <span class="material-icons">analytics</span>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Scans</h3>
+                        <p class="stat-value">0</p>
+                        <p class="stat-trend positive">
+                            <span class="material-icons">arrow_upward</span>
+                            0%
+                        </p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #2196F3;">
+                        <span class="material-icons">public</span>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Found Subdomains</h3>
+                        <p class="stat-value">0</p>
+                        <p class="stat-trend positive">
+                            <span class="material-icons">arrow_upward</span>
+                            0%
+                        </p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #FF5722;">
+                        <span class="material-icons">warning</span>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Security Vulnerabilities</h3>
+                        <p class="stat-value">0</p>
+                        <p class="stat-trend negative">
+                            <span class="material-icons">arrow_downward</span>
+                            0%
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Scans -->
+            <section class="recent-scans">
+                <h2>Recent Scans</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Target</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Results</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scanResults">
+                            <!-- JavaScript will populate this -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Results Modal -->
+            <div class="modal" id="resultsModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Scan Results</h2>
+                        <span class="material-icons close-modal">close</span>
+                    </div>
+                    <div class="modal-body">
+                        <div id="resultsContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="progress-container" class="hidden fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg">
+        <div class="mb-2">
+            <span id="progress-status" class="text-gray-700">Starting scan...</span>
+        </div>
+        <div class="w-64 bg-gray-200 rounded-full h-2.5">
+            <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+    <script>
+        // Scan Forms
+        const forms = {
+            subdomain: document.getElementById('subdomainForm'),
+            directory: document.getElementById('directoryForm'),
+            js: document.getElementById('jsForm')
+        };
+
+        // Store scan results
+        let scanHistory = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+        updateScanResults();
+
+        // Handle form submissions
+        forms.subdomain.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const domain = formData.get('target_domain');
+            
+            // Show loading overlay
+            document.querySelector('.loading-overlay').style.display = 'flex';
+            updateLoadingStatus('Starting scan...', domain);
+            
+            try {
+                const response = await fetch('/api/scan/subdomains', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        target_domain: domain
+                    }),
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Scan could not be started');
+                }
+
+                const result = await response.json();
+                console.log('Scan results:', result);
+                
+                if (result.tool === 'Subfinder') {
+                    updateLoadingStatus('Scanning subdomains...', `${result.found} subdomains found`);
+                } else if (result.tool === 'Validation') {
+                    updateLoadingStatus('Checking active domains...', 
+                        `${result.active_count} active / ${result.total_count} total`);
+                }
+                
+                // Add domain information
+                result.domain = domain;
+                
+                // Save and display results
+                addToScanHistory(result);
+                showResults(result);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                updateLoadingStatus('Error!', error.message);
+                setTimeout(() => {
+                    alert('An error occurred: ' + error.message);
+                }, 1000);
+            } finally {
+                // Hide loading overlay
+                setTimeout(() => {
+                    document.querySelector('.loading-overlay').style.display = 'none';
+                }, 500);
+            }
+        });
+
+        document.getElementById('directoryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const url = formData.get('target_url');
+            
+            try {
+                const response = await fetch('/api/scan/directories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        target_url: url
+                    }),
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Scan could not be started');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred: ' + error.message);
+            }
+        });
+
+        document.getElementById('jsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const url = formData.get('target_url');
+            
+            try {
+                const response = await fetch('/api/analyze/js', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        target_url: url
+                    }),
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Analysis could not be started');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred: ' + error.message);
+            }
+        });
+
+        function addToScanHistory(result) {
+            const scanEntry = {
+                timestamp: new Date().toISOString(),
+                domain: result.domain,
+                type: 'Subdomain',
+                totalCount: result.total_count,
+                activeCount: result.active_count,
+                results: result
+            };
+            
+            scanHistory.unshift(scanEntry);
+            if (scanHistory.length > 10) scanHistory.pop(); // Keep only the last 10 scans
+            
+            localStorage.setItem('scanHistory', JSON.stringify(scanHistory));
+            updateScanResults();
+        }
+
+        function updateScanResults() {
+            const tbody = document.getElementById('scanResults');
+            tbody.innerHTML = '';
+            
+            scanHistory.forEach(scan => {
+                const row = document.createElement('tr');
+                const date = new Date(scan.timestamp).toLocaleString();
+                
+                row.innerHTML = `
+                    <td>${scan.domain || '-'}</td>
+                    <td>${scan.type}</td>
+                    <td><span class="status completed">Completed</span></td>
+                    <td>${scan.totalCount} (${scan.activeCount} active)</td>
+                    <td>${date}</td>
+                    <td>
+                        <button class="action-btn view-results" onclick='showResults(${JSON.stringify(scan.results)})'>
+                            <span class="material-icons">visibility</span>
+                        </button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function showResults(results) {
+            console.log('Results to be displayed:', results); // Debug log
+            
+            const container = document.getElementById('resultsContainer');
+            
+            // Safely retrieve results, use empty array if none
+            const activeSubdomains = results.active_subdomains || [];
+            const allSubdomains = results.subdomains || [];
+            const totalCount = results.total_count || 0;
+            const activeCount = results.active_count || 0;
+
+            let html = `
+                <div class="results-summary">
+                    <div class="result-stat">
+                        <span class="label">Total Subdomains:</span>
+                        <span class="value">${totalCount}</span>
+                    </div>
+                    <div class="result-stat">
+                        <span class="label">Active Subdomains:</span>
+                        <span class="value">${activeCount}</span>
+                    </div>
+                </div>
+                <div class="results-list">`;
+
+            if (activeSubdomains.length > 0) {
+                html += `
+                    <h3>Active Subdomains</h3>
+                    <ul class="subdomain-list active">
+                        ${activeSubdomains.map(sub => `<li>${sub}</li>`).join('')}
+                    </ul>`;
+            }
+
+            if (allSubdomains.length > 0) {
+                html += `
+                    <h3>All Subdomains</h3>
+                    <ul class="subdomain-list all">
+                        ${allSubdomains.map(sub => `<li>${sub}</li>`).join('')}
+                    </ul>`;
+            }
+
+            html += `</div>`;
+            
+            container.innerHTML = html;
+            
+            // Show modal
+            const modal = document.getElementById('resultsModal');
+            modal.style.display = 'block';
+            modal.classList.add('show');
+        }
+
+        // Modal close handlers
+        document.querySelectorAll('.close-modal').forEach(button => {
+            button.addEventListener('click', () => {
+                const modal = button.closest('.modal');
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 300);
+            });
+        });
+
+        // Loading status updater
+        function updateLoadingStatus(status, subStatus = '') {
+            document.getElementById('loadingStatus').textContent = status;
+            document.getElementById('loadingSubStatus').textContent = subStatus;
+        }
+    </script>
+
+    <style>
+        .tool-selection {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tool-option {
+            flex: 1;
+            min-width: 150px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tool-option input[type="radio"] {
+            display: none;
+        }
+
+        .tool-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .tool-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .tool-label i {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+            color: #4a5568;
+            transition: all 0.3s ease;
+        }
+
+        .tool-label .tool-name {
+            font-weight: 500;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .tool-label .tool-description {
+            font-size: 0.875rem;
+            color: #718096;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .tool-option input[type="radio"]:checked + .tool-label {
+            border-color: #4299e1;
+            background-color: #ebf8ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(66, 153, 225, 0.2);
+        }
+
+        .tool-option input[type="radio"]:checked + .tool-label i {
+            color: #4299e1;
+        }
+
+        .tool-option input[type="radio"]:checked + .tool-label .tool-name {
+            color: #2b6cb0;
+        }
+
+        @keyframes toolPulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(66, 153, 225, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(66, 153, 225, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(66, 153, 225, 0);
+            }
+        }
+
+        .tool-option input[type="radio"]:checked + .tool-label {
+            animation: toolPulse 2s infinite;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-content {
+            background: #1a1a1a;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 0 30px rgba(0, 128, 255, 0.2);
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+        }
+
+        .scanner-animation {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 2rem;
+            background: #000;
+            border-radius: 50%;
+            border: 2px solid #0066cc;
+            overflow: hidden;
+        }
+
+        .scan-bar {
+            position: absolute;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, transparent, #00ff00, transparent);
+            animation: scanning 2s linear infinite;
+            box-shadow: 0 0 20px #00ff00;
+        }
+
+        .target-domain {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            border: 2px solid #004080;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .target-domain::before,
+        .target-domain::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid #004080;
+            border-radius: 50%;
+        }
+
+        .target-domain::before {
+            width: 60%;
+            height: 60%;
+        }
+
+        .target-domain::after {
+            width: 40%;
+            height: 40%;
+        }
+
+        .loading-text {
+            color: #fff;
+        }
+
+        .loading-text h3 {
+            margin: 0 0 0.5rem;
+            font-size: 1.2rem;
+            color: #00ff00;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        .loading-text p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #808080;
+        }
+
+        @keyframes scanning {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(200px);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.95);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(0.95);
+                opacity: 0.6;
+            }
+        }
+    </style>
+</body>
+</html> 
